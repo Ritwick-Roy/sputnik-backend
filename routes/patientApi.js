@@ -6,12 +6,23 @@ const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const jwt = require("jsonwebtoken");
 const authDoctor = require("../middleware/authDoctor");
+const authPatient = require("../middleware/authPatient");
 require("dotenv").config();
 
-router.get("/", authDoctor, async (req, res) => {
+router.get("/", authPatient, async (req, res) => {
   try {
-    const patient = await Patient.find().select("-password");
+    const patient = await Patient.findById(req.patient.id).select("-password");
     res.json(patient);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const id=req.params.id;
+    const doctor = await Patient.findById(id).select("-password");
+    res.json(doctor);
   } catch (error) {
     console.error(error.message);
   }
@@ -74,7 +85,6 @@ router.post(
   ],
   async (req, res) => {
     const errors = validationResult(req);
-    console.log(req.body);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
@@ -114,5 +124,19 @@ router.post(
     }
   }
 );
+
+router.put('/',authPatient,async(req,res)=>{
+  try {
+    const {name,pic} =req.body;
+    const id=req.patient.id;
+    let patient=await Patient.findById(id);
+    let files=patient.files;
+    files=[...files,{name,pic}]
+    patient=await Patient.findByIdAndUpdate(id,{files});
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Server error");
+  }
+});
 
 module.exports = router;

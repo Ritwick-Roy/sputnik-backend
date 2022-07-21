@@ -13,6 +13,7 @@ const patientSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    files: [{ name: { type: String }, pic: { type: String } }],
     date: {
       type: Date,
       default: Date.now,
