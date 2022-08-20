@@ -39,14 +39,15 @@ const io = require("socket.io")(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("Connected to socket.io");
-  console.log(socket.id);
+  console.log(`User Connected: ${socket.id}`);
 
-  // socket.on("new message", (newMessageRecieved) => {
-  //   console.log("new message");
-  //   console.log(newMessageRecieved);
-  //   socket.broadcast.emit("message received", newMessageRecieved);
-  // });
+  socket.on("join_room", (data) => {
+    socket.join(data);
+  });
+
+  socket.on("send_message", (data) => {
+    socket.to(data.room).emit("receive_message", data);
+  });
 
   socket.on("disconnect", () => {
     console.log("user disconnected");
