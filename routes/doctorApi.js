@@ -5,11 +5,76 @@ const { check, validationResult } = require("express-validator");
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const jwt = require("jsonwebtoken");
+const redis = require("redis");
 require("dotenv").config();
 
-router.get("/", async (req, res) => {
+let redisClient;
+
+(async () => {
+  redisClient = redis.createClient();
+
+  redisClient.on("error", (error) => console.error(`Error : ${error}`));
+
+  await redisClient.connect();
+})();
+
+async function getDoctors(req, res) {
+  let results;
+  let isCached = false;
+
+  try {
+    const cacheResults = await redisClient.get("doctors");
+    if (cacheResults) {
+      isCached = true;
+      results = JSON.parse(cacheResults);
+    } else {
+      results = await Doctor.find().select("-password");
+      if (results.length === 0) {
+        throw "API returned an empty array";
+      }
+      await redisClient.setex("doctors",3600, JSON.stringify(results));
+    }
+
+    res.send({
+      fromCache: isCached,
+      data: results,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(404).send("Data unavailable");
+  }
+}
+
+const checkCacheDoctor = async (req,res,next) =>{
+  // const cacheResults = await redisClient.get("doctors");
+  // if (cacheResults) {
+    // isCached = true;
+  //   results = JSON.parse(cacheResults);
+  // } else {
+  //   results = await Doctor.find().select("-password");
+  //   if (results.length === 0) {
+  //     throw "API returned an empty array";
+  //   }
+  //   await redisClient.setex("doctors",3600, JSON.stringify(results));
+  // }
+
+  //   res.send({
+  //     fromCache: isCached,
+  //     data: results,
+  //   });
+  const cacheResults = await redisClient.get("doctors");
+  if(cacheResults)
+  {
+    return res.json(JSON.parse(cacheResults));
+  } else {
+    next();
+  }
+}
+
+router.get("/", checkCacheDoctor, async (req, res) => {
   try {
     const doctor = await Doctor.find().select("-password");
+    client.set("doctors", JSON.stringify(doctor));
     res.json(doctor);
   } catch (error) {
     console.error(error.message);

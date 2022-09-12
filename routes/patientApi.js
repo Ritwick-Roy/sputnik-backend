@@ -43,6 +43,7 @@ router.post(
       const { email, password } = req.body;
       let patient = await Patient.findOne({ email: email });
       if (!patient) {
+        console.log("Account not found");
         return res
           .status(400)
           .json({ error: [{ msg: "Invalid email or password" }] });
@@ -50,6 +51,7 @@ router.post(
 
       const match = await bcrypt.compare(password, patient.password);
       if (!match) {
+        console.log("Invalid password");
         return res
           .status(400)
           .json({ error: [{ msg: "Invalid email or password" }] });
