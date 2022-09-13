@@ -18,50 +18,7 @@ let redisClient;
   await redisClient.connect();
 })();
 
-async function getDoctors(req, res) {
-  let results;
-  let isCached = false;
-
-  try {
-    const cacheResults = await redisClient.get("doctors");
-    if (cacheResults) {
-      isCached = true;
-      results = JSON.parse(cacheResults);
-    } else {
-      results = await Doctor.find().select("-password");
-      if (results.length === 0) {
-        throw "API returned an empty array";
-      }
-      await redisClient.setex("doctors",3600, JSON.stringify(results));
-    }
-
-    res.send({
-      fromCache: isCached,
-      data: results,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(404).send("Data unavailable");
-  }
-}
-
 const checkCacheDoctor = async (req,res,next) =>{
-  // const cacheResults = await redisClient.get("doctors");
-  // if (cacheResults) {
-    // isCached = true;
-  //   results = JSON.parse(cacheResults);
-  // } else {
-  //   results = await Doctor.find().select("-password");
-  //   if (results.length === 0) {
-  //     throw "API returned an empty array";
-  //   }
-  //   await redisClient.setex("doctors",3600, JSON.stringify(results));
-  // }
-
-  //   res.send({
-  //     fromCache: isCached,
-  //     data: results,
-  //   });
   const cacheResults = await redisClient.get("doctors");
   if(cacheResults)
   {
@@ -74,7 +31,7 @@ const checkCacheDoctor = async (req,res,next) =>{
 router.get("/", checkCacheDoctor, async (req, res) => {
   try {
     const doctor = await Doctor.find().select("-password");
-    client.set("doctors", JSON.stringify(doctor));
+    redisClient.set("doctors", JSON.stringify(doctor));
     res.json(doctor);
   } catch (error) {
     console.error(error.message);

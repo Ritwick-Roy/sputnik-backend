@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5000;
 const appointmentApiRoutes = require("./routes/appointmentApi");
 const doctorApiRoutes = require("./routes/doctorApi");
 const patientApiRoutes = require("./routes/patientApi");
-// const profileApiRoutes = require("./routes/profileApi");
+const profileApiRoutes = require("./routes/profileApi");
 
 app.use(morgan("dev"));
 
@@ -20,7 +20,7 @@ app.use(express.json({ extended: false }));
 app.use("/api/appointment", appointmentApiRoutes);
 app.use("/api/doctor",doctorApiRoutes);
 app.use("/api/patient",patientApiRoutes)
-// app.use("/api/profile", profileApiRoutes);
+app.use("/api/profile", profileApiRoutes);
 
 app.get("/", (req, res) => {
   res.send("Default route up!");
